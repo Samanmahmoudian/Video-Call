@@ -8,7 +8,7 @@ async function bootstrap() {
   app.enableCors({
     origin:'https://front-n04k.onrender.com'
   })
-  const peerServer = PeerServer({host:'localhost',port:443, path:'/'});
+  const peerServer = PeerServer({host:'localhost',port:443, path:'/myapp'});
   await app.listen(3000);
 }
 bootstrap();
