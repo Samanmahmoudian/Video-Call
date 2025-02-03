@@ -1,13 +1,10 @@
 import { Module } from '@nestjs/common';
-import { SocketModule } from './socket/socket.module';
+import { SignalingGateway } from './signaling/signaling.gateway';
+
 
 
 @Module({
-
-  providers: [],
-
-  imports: [SocketModule],
-
+  providers:[SignalingGateway]
 
 })
 export class AppModule {}
