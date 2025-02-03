@@ -1,6 +1,6 @@
 import { MessageBody, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
 
-@WebSocketGateway(9000)
+@WebSocketGateway(9001)
 export class SocketGateway {
   @SubscribeMessage('message')
   async handlemessage(@MessageBody() message:any){
