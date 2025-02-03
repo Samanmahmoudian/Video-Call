@@ -9,7 +9,6 @@ async function bootstrap() {
 app.enableCors()
   const server = app.getHttpServer();
   const peerServer = PeerServer({ port: 9000, path: '/peerjs' });
-  app.use('/peerjs', express.static('public'));
   await app.listen(3000);
 }
 bootstrap();
