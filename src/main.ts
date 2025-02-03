@@ -7,8 +7,8 @@ const cors = require('cors')
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 app.enableCors()
-  const server = app.getHttpServer();
-  const peerServer = PeerServer({ port: 9000, path: '/peerjs' });
+
+  const peerServer = PeerServer({path: '/peerjs' });
   await app.listen(3000);
 }
 bootstrap();
