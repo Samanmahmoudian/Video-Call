@@ -12,7 +12,7 @@
     <button onclick="startCall()">Start Call</button>
 
     <script>
-        const peer = new Peer('','http://localhost:3000');
+        const peer = new Peer('','https://video-call-uylq.onrender.com');
         let localStream;
 
         peer.on('open', id => {
