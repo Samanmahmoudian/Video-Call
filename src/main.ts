@@ -7,7 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors({ origin: '*' });
 
-const peerServer = PeerServer({host:'http://localhost:3000'})
+const peerServer = PeerServer({host:'localhost' , port:3000})
   await app.listen(3000);
 }
 
