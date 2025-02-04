@@ -5,8 +5,10 @@ import { ExpressPeerServer, PeerServer } from 'peer';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const peerServer =  PeerServer({host:'localhost' , port:443 , path:'/myapp'})
-await app.listen(3000);
+  app.enableCors({ origin: '*' });
 
+const peerServer = PeerServer({host:'127.0.0.1' ,port:443, path:'/peerjs'})
+  await app.listen(3000);
 }
+
 bootstrap();

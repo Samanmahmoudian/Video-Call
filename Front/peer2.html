@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PeerJS Video Call - Caller</title>
+    <title>PeerJS Video Call - Callee</title>
     <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
-    <h1>Caller</h1>
+    <h1>Callee</h1>
     <video id="local-video" autoplay playsinline></video>
     <video id="remote-video" autoplay playsinline></video>
-    <input type="text" id="callee-id" placeholder="Enter callee ID"/>
-    <button onclick="startCall()">Start Call</button>
+    <p id="callee-id">Your ID: </p>
 
     <script>
         const peer = new Peer('',{host:'localhost' , port:443 , path:'/peerjs'});
         let localStream;
 
         peer.on('open', id => {
-            console.log(id)
+            document.getElementById('callee-id').innerText = 'Your ID: ' + id;
         });
 
         peer.on('call', call => {
@@ -32,15 +31,6 @@
             const localVideo = document.getElementById('local-video');
             localVideo.srcObject = stream;
         });
-
-        function startCall() {
-            const calleeID = document.getElementById('callee-id').value;
-            const call = peer.call(calleeID, localStream);
-            call.on('stream', remoteStream => {
-                const remoteVideo = document.getElementById('remote-video');
-                remoteVideo.srcObject = remoteStream;
-            });
-        }
     </script>
 </body>
 </html>
