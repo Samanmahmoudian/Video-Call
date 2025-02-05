@@ -34,11 +34,25 @@
 
         const peerConnectionConfig = {
   iceServers: [
+    // Public STUN server (Google's public STUN server)
     {
-      urls: "stun:stun.personal-voip.de:3478" // Google's public STUN server
-    }
+      urls: "stun:stun.l.google.com:19302"  // Google STUN server
+    },
+    {
+      urls: "stun:stun1.l.google.com:19302"  // Another Google STUN server
+    },
+    {
+      urls: "stun:stun2.l.google.com:19302"  // Another Google STUN server
+    },
+    // TURN server configuration (you need to replace with your own TURN server credentials)
+    {
+    url: 'turn:192.158.29.39:3478?transport=udp',
+    credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+    username: '28224511:1379330808'
+},
   ]
 };
+
 
         peerConnection = new RTCPeerConnection(peerConnectionConfig);
 
