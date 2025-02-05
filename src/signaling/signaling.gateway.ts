@@ -38,8 +38,6 @@ export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnec
   }
   @SubscribeMessage('meow')
   handlemeow(@MessageBody() message){
-    this.server.on('meow' , message=>{
-      console.log(message)
-    } )
+console.log('meow')
   }
 }
