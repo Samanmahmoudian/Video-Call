@@ -32,15 +32,57 @@
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
 
-        const peerConnectionConfig= {
-    iceServers: [
-        {
-            urls: 'turn:openrelay.metered.ca:80',
-            username: 'openrelayproject',
-            credentials: 'openrelayproject'
-        }
-    ]
-}
+        const peerConnectionConfig = {
+  iceServers: [
+    // STUN servers (multiple for redundancy)
+    {
+      urls: 'stun:stun.l.google.com:19302' // Google's STUN server
+    },
+    {
+      urls: 'stun:stun1.l.google.com:19302' // Google's STUN server (second one)
+    },
+    {
+      urls: 'stun:stun2.l.google.com:19302' // Google's STUN server (third one)
+    },
+    {
+      urls: 'stun:stun3.l.google.com:19302' // Another Google STUN server
+    },
+    {
+      urls: 'stun:stun4.l.google.com:19302' // Additional Google STUN server
+    },
+    {
+      urls: 'stun:stun.services.mozilla.com' // Mozilla's STUN server
+    },
+
+    // TURN servers (multiple for redundancy)
+    {
+      urls: 'turn:turn.xirsys.com', // Xirsys TURN server
+      username: 'your-username',    // Replace with your Xirsys TURN username
+      credential: 'your-credential' // Replace with your Xirsys TURN credential
+    },
+    {
+      urls: 'turn:turn1.xirsys.com', // Additional Xirsys TURN server
+      username: 'your-username',     // Same Xirsys TURN credentials
+      credential: 'your-credential'
+    },
+    {
+      urls: 'turn:turn2.xirsys.com', // Another Xirsys TURN server
+      username: 'your-username',     // Same credentials
+      credential: 'your-credential'
+    },
+    {
+      urls: 'turn:your-turn-server-url:3478', // Your own TURN server (replace with actual TURN server URL)
+      username: 'your-turn-username', // Your TURN username
+      credential: 'your-turn-credential' // Your TURN password
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:80', // Public TURN server (for testing)
+      username: 'openrelayproject',         // Username for public TURN
+      credential: 'openrelayproject'        // Password for public TURN
+    }
+  ]
+};
+
 
 
         peerConnection = new RTCPeerConnection(peerConnectionConfig);

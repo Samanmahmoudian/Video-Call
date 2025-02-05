@@ -1,25 +1,35 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer, ConnectedSocket } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { OnGatewayConnection, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { Server , Socket } from 'socket.io';
 
 @WebSocketGateway({cors:{origin:'*'}})
-export class SignalingGateway {
+export class SignalingGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;
 
-  @SubscribeMessage('offer')
-  handleOffer(@MessageBody() offer, @ConnectedSocket() client: Socket) {
-    // Relay the offer to the other client
-    client.broadcast.emit('offer', offer); // broadcasting to all other clients except the sender
+  handleConnection(client: Socket) {
+    console.log('Client connected: ' + client.id);
   }
 
-  @SubscribeMessage('answer')
-  handleAnswer(@MessageBody() answer: any,@ConnectedSocket() client: Socket) {
-    // Relay the answer to the other client
-    client.broadcast.emit('answer', answer); // broadcasting to all other clients except the sender
+  handleOffer(client: Socket, data: { offer: RTCSessionDescriptionInit, targetTabId: string }) {
+    const { offer, targetTabId } = data;
+    // Emit offer to the target tab only
+    this.server.to(targetTabId).emit('offer', { offer: offer, targetTabId: client.id });
   }
 
-  @SubscribeMessage('candidate')
-  handleCandidate(@MessageBody() candidate: any, @ConnectedSocket() client: Socket) {
-    // Relay the ICE candidate to the other client
-    client.broadcast.emit('candidate', candidate); // broadcasting to all other clients except the sender
+  handleAnswer(client: Socket, data: { answer: RTCSessionDescriptionInit, targetTabId: string }) {
+    const { answer, targetTabId } = data;
+    // Emit answer to the target tab only
+    this.server.to(targetTabId).emit('answer', { answer: answer, targetTabId: client.id });
+  }
+
+  handleCandidate(client: Socket, data: { candidate: RTCIceCandidateInit, targetTabId: string }) {
+    const { candidate, targetTabId } = data;
+    // Emit ICE candidate to the target tab only
+    this.server.to(targetTabId).emit('candidate', { candidate: candidate, targetTabId: client.id });
+  }
+
+  // Join a specific room (for a specific tab id)
+  joinRoom(client: Socket, tabId: string) {
+    client.join(tabId);
+    console.log(`Client ${client.id} joined room ${tabId}`);
   }
 }
