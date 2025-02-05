@@ -1,35 +1,39 @@
-import { OnGatewayConnection, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Server , Socket } from 'socket.io';
+import {
+  WebSocketGateway,
+  SubscribeMessage,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  ConnectedSocket,
+  MessageBody,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway({cors:{origin:'*'}})
-export class SignalingGateway implements OnGatewayConnection {
-  @WebSocketServer() server: Server;
+@WebSocketGateway({ cors: { origin: '*' } })
+export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer()
+  server: Server;
 
   handleConnection(client: Socket) {
-    console.log('Client connected: ' + client.id);
+    console.log('Client connected:', client.id);
   }
 
-  handleOffer(client: Socket, data: { offer: RTCSessionDescriptionInit, targetTabId: string }) {
-    const { offer, targetTabId } = data;
-    // Emit offer to the target tab only
-    this.server.to(targetTabId).emit('offer', { offer: offer, targetTabId: client.id });
+  handleDisconnect(client: Socket) {
+    console.log('Client disconnected:', client.id);
   }
 
-  handleAnswer(client: Socket, data: { answer: RTCSessionDescriptionInit, targetTabId: string }) {
-    const { answer, targetTabId } = data;
-    // Emit answer to the target tab only
-    this.server.to(targetTabId).emit('answer', { answer: answer, targetTabId: client.id });
+  @SubscribeMessage('offer')
+  handleOffer(@ConnectedSocket() client: Socket, @MessageBody() offer: any): void {
+    client.broadcast.emit('offer', offer);
   }
 
-  handleCandidate(client: Socket, data: { candidate: RTCIceCandidateInit, targetTabId: string }) {
-    const { candidate, targetTabId } = data;
-    // Emit ICE candidate to the target tab only
-    this.server.to(targetTabId).emit('candidate', { candidate: candidate, targetTabId: client.id });
+  @SubscribeMessage('answer')
+  handleAnswer(@ConnectedSocket() client: Socket, @MessageBody() answer: any): void {
+    client.broadcast.emit('answer', answer);
   }
 
-  // Join a specific room (for a specific tab id)
-  joinRoom(client: Socket, tabId: string) {
-    client.join(tabId);
-    console.log(`Client ${client.id} joined room ${tabId}`);
+  @SubscribeMessage('ice-candidate')
+  handleIceCandidate(@ConnectedSocket() client: Socket,@MessageBody() candidate: any): void {
+    client.broadcast.emit('ice-candidate', candidate);
   }
 }
