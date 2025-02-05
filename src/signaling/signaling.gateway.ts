@@ -1,26 +1,25 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { WebSocketGateway, SubscribeMessage, MessageBody, WebSocketServer, ConnectedSocket } from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway(3001, { cors:{origin:'*'} })
+@WebSocketGateway({cors:{origin:'*'}})
 export class SignalingGateway {
-  @SubscribeMessage('join')
-  handleJoin(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    // Broadcast message to all clients when a new client joins
-    client.broadcast.emit('user-joined', data);
-  }
+  @WebSocketServer() server: Server;
 
   @SubscribeMessage('offer')
-  handleOffer(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    client.broadcast.emit('offer', data);
+  handleOffer(@MessageBody() offer, @ConnectedSocket() client: Socket) {
+    // Relay the offer to the other client
+    client.broadcast.emit('offer', offer); // broadcasting to all other clients except the sender
   }
 
   @SubscribeMessage('answer')
-  handleAnswer(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    client.broadcast.emit('answer', data);
+  handleAnswer(@MessageBody() answer: any,@ConnectedSocket() client: Socket) {
+    // Relay the answer to the other client
+    client.broadcast.emit('answer', answer); // broadcasting to all other clients except the sender
   }
 
-  @SubscribeMessage('ice-candidate')
-  handleIceCandidate(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    client.broadcast.emit('ice-candidate', data);
+  @SubscribeMessage('candidate')
+  handleCandidate(@MessageBody() candidate: any, @ConnectedSocket() client: Socket) {
+    // Relay the ICE candidate to the other client
+    client.broadcast.emit('candidate', candidate); // broadcasting to all other clients except the sender
   }
 }

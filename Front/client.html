@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebRTC Video Call</title>
+  <style>
+    #local-video, #remote-video {
+      width: 45%;
+      border: 2px solid black;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>WebRTC Video Call</h2>
+  <video id="local-video" autoplay muted></video>
+  <video id="remote-video" autoplay></video>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  <script>
+    const socket = io('http://localhost:3000');
+    const localVideo = document.getElementById('local-video');
+    const remoteVideo = document.getElementById('remote-video');
+  
+
+    let localStream;
+    let peerConnection;
+
+    // Get user's media
+    async function startCall() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection();
+
+        // Add local stream to peer connection
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+
+        // Listen for ICE candidates
+        peerConnection.onicecandidate = function(event) {
+          if (event.candidate) {
+            socket.emit('candidate', event.candidate);
+          }
+        };
+
+        // Listen for remote stream
+        peerConnection.ontrack = function(event) {
+          remoteVideo.srcObject = event.streams[0];
+        };
+
+        // Create an offer if it's the first tab
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        socket.emit('offer', offer);
+      } catch (err) {
+        console.error('Error accessing media devices:', err);
+      }
+    }
+
+    socket.on('offer', async (offer) => {
+      if (!peerConnection) {
+        await startCall();
+      }
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      socket.emit('answer', answer);
+    });
+
+    socket.on('answer', (answer) => {
+      peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on('candidate', (candidate) => {
+      peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+
+    // Start call when ready
+    window.onload = startCall;
+  </script>
+
+
+
+</body>
+</html>
