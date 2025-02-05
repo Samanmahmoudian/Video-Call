@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client 1</title>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Client 1</h1>
+  <video id="local-video" autoplay muted></video>
+  <video id="remote-video" autoplay></video>
+  <button id="start-call" onclick="startCall()">Start Call</button>
+  
+  <script>
+    const socket = io('ws://localhost:3001');  // WebSocket URL to NestJS server
+    let localStream;
+    let peerConnection;
+    let remoteVideo = document.getElementById('remote-video');
+    let localVideo = document.getElementById('local-video');
+    const startCallButton = document.getElementById('start-call');
+
+    // Video capture when "Start Call" is pressed
+    async function startCall() {
+      // Disable the button after it's clicked to avoid multiple calls
+      startCallButton.disabled = true;
+
+      // Capture local media (camera and microphone)
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localVideo.srcObject = localStream;
+
+      // Create a new peer connection
+      peerConnection = new RTCPeerConnection();
+      
+      // Add all media tracks to the peer connection
+      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+      // Send ICE candidates to the server
+      peerConnection.onicecandidate = event => {
+        if (event.candidate) {
+          socket.emit('ice-candidate', event.candidate);
+        }
+      };
+
+      // Display the remote video stream
+      peerConnection.ontrack = event => {
+        remoteVideo.srcObject = event.streams[0];
+      };
+
+      // Create an offer and send it to the signaling server
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      socket.emit('offer', offer);
+    }
+
+    // Listen for the 'offer' event from the signaling server
+    socket.on('offer', async (offer) => {
+      peerConnection = new RTCPeerConnection();
+      peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+      peerConnection.onicecandidate = event => {
+        if (event.candidate) {
+          socket.emit('ice-candidate', event.candidate);
+        }
+      };
+
+      peerConnection.ontrack = event => {
+        remoteVideo.srcObject = event.streams[0];
+      };
+
+      // Capture local video and send it to the peer connection
+      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      socket.emit('answer', answer);
+    });
+
+    // Listen for the 'answer' event from the other client
+    socket.on('answer', (answer) => {
+      peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    // Listen for incoming ICE candidates
+    socket.on('ice-candidate', (candidate) => {
+      peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+  </script>
+</body>
+</html>

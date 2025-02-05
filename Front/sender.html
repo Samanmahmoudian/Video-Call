@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client 2</title>
+  <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Client 2</h1>
+  <video id="local-video" autoplay muted></video>
+  <video id="remote-video" autoplay></video>
+  
+  <script>
+    const socket = io('ws://localhost:3001');  // WebSocket URL to NestJS server
+    let localStream;
+    let peerConnection;
+    let remoteVideo = document.getElementById('remote-video');
+    let localVideo = document.getElementById('local-video');
+
+    // Capture local media (camera and microphone)
+    async function startCall() {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      localVideo.srcObject = localStream;
+
+    
+
+      peerConnection = new RTCPeerConnection();
+
+      peerConnection.onicecandidate = event => {
+        if (event.candidate) {
+          socket.emit('ice-candidate', event.candidate);
+        }
+      };
+
+      peerConnection.ontrack = event => {
+        remoteVideo.srcObject = event.streams[0];
+      };
+
+      // Automatically respond to an incoming offer
+      socket.on('offer', async (offer) => {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('answer', answer);
+      });
+
+      socket.on('answer', (answer) => {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      });
+
+      socket.on('ice-candidate', (candidate) => {
+        peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      });
+    }
+
+    // Start the call as soon as the script loads
+    startCall();
+  </script>
+</body>
+</html>
