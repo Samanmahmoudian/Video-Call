@@ -36,4 +36,10 @@ export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnec
   handleIceCandidate(@ConnectedSocket() client: Socket,@MessageBody() candidate: any): void {
     client.broadcast.emit('ice-candidate', candidate);
   }
+  @SubscribeMessage('meow')
+  handlemeow(@MessageBody() message){
+    this.server.on('meow' , message=>{
+      console.log(message)
+    } )
+  }
 }
