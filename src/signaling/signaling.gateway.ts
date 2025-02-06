@@ -1,43 +1,36 @@
-import {
-  WebSocketGateway,
-  SubscribeMessage,
-  WebSocketServer,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  ConnectedSocket,
-  MessageBody,
-} from '@nestjs/websockets';
+import { WebSocketGateway, WebSocketServer, SubscribeMessage, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 
-@WebSocketGateway({ cors: { origin: '*' } })
-export class SignalingGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer()
-  server: Server;
+@WebSocketGateway({cors:{origin:'*'}})
+export class SignalingGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  @WebSocketServer() server: Server;
+  private logger: Logger = new Logger('AppGateway');
 
-  handleConnection(client: Socket) {
-    console.log('Client connected:', client.id);
+  afterInit(server: Server) {
+    this.logger.log('Init');
   }
 
   handleDisconnect(client: Socket) {
-    console.log('Client disconnected:', client.id);
+    this.logger.log(`Client disconnected: ${client.id}`);
+  }
+
+  handleConnection(client: Socket, ...args: any[]) {
+    this.logger.log(`Client connected: ${client.id}`);
   }
 
   @SubscribeMessage('offer')
-  handleOffer(@ConnectedSocket() client: Socket, @MessageBody() offer: any): void {
-    client.broadcast.emit('offer', offer);
+  handleOffer(client: Socket, payload: any): void {
+    client.broadcast.emit('offer', payload);
   }
 
   @SubscribeMessage('answer')
-  handleAnswer(@ConnectedSocket() client: Socket, @MessageBody() answer: any): void {
-    client.broadcast.emit('answer', answer);
+  handleAnswer(client: Socket, payload: any): void {
+    client.broadcast.emit('answer', payload);
   }
 
-  @SubscribeMessage('ice-candidate')
-  handleIceCandidate(@ConnectedSocket() client: Socket,@MessageBody() candidate: any): void {
-    client.broadcast.emit('ice-candidate', candidate);
-  }
-  @SubscribeMessage('meow')
-  handlemeow(@MessageBody() message){
-console.log('meow')
+  @SubscribeMessage('candidate')
+  handleCandidate(client: Socket, payload: any): void {
+    client.broadcast.emit('candidate', payload);
   }
 }
